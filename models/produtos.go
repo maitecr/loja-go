@@ -35,6 +35,7 @@ func GetProdutos() []Produto {
 			panic(err.Error())
 		}
 
+		p.Id = id
 		p.Nome = nome
 		p.Descricao = descricao
 		p.Preco = preco
@@ -59,6 +60,20 @@ func CreateProduto(nome, descricao string, preco float64, quantidade int) {
 	}
 
 	insertScript.Exec(nome, descricao, preco, quantidade)
+
+	defer db.Close()
+}
+
+func DeleteProduto(id string) {
+	db := db.ConectarBD()
+
+	deleteScript, err := db.Prepare("delete from produtos where id = $1")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	deleteScript.Exec(id)
 
 	defer db.Close()
 }
