@@ -15,7 +15,7 @@ type Produto struct {
 func GetProdutos() []Produto {
 	db := db.ConectarBD()
 
-	selectProdutos, err := db.Query("select * from produtos")
+	selectProdutos, err := db.Query("select * from produtos order by id asc")
 
 	if err != nil {
 		panic(err)
@@ -74,6 +74,54 @@ func DeleteProduto(id string) {
 	}
 
 	deleteScript.Exec(id)
+
+	defer db.Close()
+}
+
+func EditProduto(id string) Produto {
+	db := db.ConectarBD()
+
+	infoBD, err := db.Query("select * from produtos where id = $1", id)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	produtoUpdate := Produto{}
+
+	for infoBD.Next() {
+		var id, quantidade int
+		var nome, descricao string
+		var preco float64
+
+		err = infoBD.Scan(&id, &nome, &descricao, &preco, &quantidade)
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+		produtoUpdate.Id = id
+		produtoUpdate.Nome = nome
+		produtoUpdate.Descricao = descricao
+		produtoUpdate.Preco = preco
+		produtoUpdate.Quantidade = quantidade
+	}
+
+	defer db.Close()
+
+	return produtoUpdate
+}
+
+func UpdateProduto(nome, descricao string, preco float64, quantidade, id int) {
+	db := db.ConectarBD()
+
+	updateScrip, err := db.Prepare("update produtos set nome=$1, descricao=$2, preco=$3, quantidade=$4 where id=$5")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	updateScrip.Exec(nome, descricao, preco, quantidade, id)
 
 	defer db.Close()
 }
